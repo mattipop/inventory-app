@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import sqlite3
+from webauthn import generate_registration_options, generate_authentication_options, verify_registration_response, verify_authentication_response
+import os
+import json
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # change this to anything random
