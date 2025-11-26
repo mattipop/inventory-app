@@ -152,3 +152,18 @@ def inventory():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+@app.route('/wipe_data', methods=['POST'])
+@login_required
+def wipe_data():
+    confirm = request.form.get("confirm")
+    if confirm == "YES":
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute("DELETE FROM sales")
+        c.execute("DELETE FROM purchases")
+        conn.commit()
+        conn.close()
+        return redirect(url_for('inventory'))
+    else:
+        return redirect(url_for('inventory'))

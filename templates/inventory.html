@@ -22,6 +22,20 @@
     </tr>
     {% endfor %}
   </tbody>
+  
+  <form method="POST" action="{{ url_for('wipe_data') }}" onsubmit="return confirmWipe();">
+    <input type="hidden" name="confirm" value="YES">
+    <button type="submit" style="background-color: red; color: white; padding: 10px; border: none; border-radius: 5px;">
+        Wipe All Data
+    </button>
+</form>
+
+<script>
+function confirmWipe() {
+    return confirm("⚠️ Are you sure you want to wipe ALL data? This cannot be undone!");
+}
+</script>
+
 </table>
 {% if not stock %}
 <p>No inventory yet. Add some purchases!</p>
