@@ -32,11 +32,11 @@ def init_db():
 
 init_db()
 
-# --- Simple login credentials ---
-USERNAME = "admin"
-PASSWORD = "1234"
+USERS = {
+    "matti": {"password": "9002", "webauthn": None},
+    "max": {"password": "2010", "webauthn": None}
+}
 
-# --- Login required decorator ---
 def login_required(f):
     def wrapper(*args, **kwargs):
         if "user" not in session:
@@ -45,24 +45,69 @@ def login_required(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
-# --- Login page ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == USERNAME and password == PASSWORD:
+        if username in USERS and USERS[username] == password:
             session['user'] = username
             return redirect(url_for('index'))
         else:
             return render_template('login.html', error="Invalid username or password.")
     return render_template('login.html')
 
-# --- Logout ---
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
+
+
+@app.route("/webauthn/register_options", methods=["POST"])
+def webauthn_register_options():
+    username = request.json["username"]
+    if username not in USERS:
+        return jsonify({"error": "Unknown user"}), 400
+    registration_options = generate_registration_options(
+        rp_name="Inventory Tracker",
+        user_id=username.encode(),
+        user_name=username,
+        challenge=os.urandom(32)
+    )
+    session["challenge"] = registration_options.challenge
+    return jsonify(json.loads(registration_options.json()))
+
+@app.route("/webauthn/register_response", methods=["POST"])
+def webauthn_register_response():
+    username = request.json["username"]
+    credential = request.json["credential"]
+    challenge = session.get("challenge")
+    if not challenge:
+        return jsonify({"error": "No challenge found"}), 400
+    USERS[username]["webauthn"] = credential
+    return jsonify({"status": "ok"})
+
+@app.route("/webauthn/authenticate_options", methods=["POST"])
+def webauthn_authenticate_options():
+    username = request.json["username"]
+    if username not in USERS or not USERS[username]["webauthn"]:
+        return jsonify({"error": "No passkey registered"}), 400
+    options = generate_authentication_options(
+        rp_id="inventory-tracker.onrender.com",  # Replace with your Render domain
+        challenge=os.urandom(32)
+    )
+    session["challenge"] = options.challenge
+    return jsonify(json.loads(options.json()))
+
+@app.route("/webauthn/authenticate_response", methods=["POST"])
+def webauthn_authenticate_response():
+    username = request.json["username"]
+    credential = request.json["credential"]
+    challenge = session.get("challenge")
+    if not challenge:
+        return jsonify({"error": "No challenge found"}), 400
+    session["user"] = username
+    return jsonify({"status": "ok"})
 
 # --- Dashboard ---
 @app.route('/')

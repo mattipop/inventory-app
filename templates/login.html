@@ -9,16 +9,124 @@
 <body>
   <div class="container">
     <h2>🔐 Login</h2>
+
     {% if error %}
       <p style="color:red;">{{ error }}</p>
     {% endif %}
+
+    <!-- Normal login form -->
     <form method="POST">
       <label>Username:</label><br>
-      <input type="text" name="username" required><br><br>
+      <input type="text" name="username" id="username" required><br><br>
+
       <label>Password:</label><br>
       <input type="password" name="password" required><br><br>
+
       <input type="submit" value="Login">
     </form>
+
+    <hr>
+    <h3>Or use Passkey / Face ID</h3>
+    <button id="registerPasskey">Register Passkey</button>
+    <button id="loginPasskey">Login with Passkey</button>
   </div>
+
+  <script>
+    async function bufferDecode(value) {
+      return Uint8Array.from(atob(value), c => c.charCodeAt(0));
+    }
+    async function bufferEncode(value) {
+      return btoa(String.fromCharCode(...new Uint8Array(value)));
+    }
+
+    const usernameInput = document.getElementById('username');
+
+    document.getElementById('registerPasskey').addEventListener('click', async () => {
+      const username = usernameInput.value;
+      if (!username) { alert("Enter your username first!"); return; }
+
+      // 1️⃣ Get registration options from server
+      const optionsResponse = await fetch("/webauthn/register_options", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username})
+      });
+      const options = await optionsResponse.json();
+
+      // 2️⃣ Convert challenge & user.id from base64 to ArrayBuffer
+      options.challenge = bufferDecode(options.challenge);
+      options.user.id = bufferDecode(options.user.id);
+
+      // 3️⃣ Create credentials (Face ID)
+      const credential = await navigator.credentials.create({publicKey: options});
+
+      // 4️⃣ Encode rawId to base64 to send to server
+      const credentialData = {
+        id: credential.id,
+        type: credential.type,
+        rawId: await bufferEncode(credential.rawId),
+        response: {
+          attestationObject: await bufferEncode(credential.response.attestationObject),
+          clientDataJSON: await bufferEncode(credential.response.clientDataJSON)
+        }
+      };
+
+      // 5️⃣ Send to server
+      const res = await fetch("/webauthn/register_response", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username, credential: credentialData})
+      });
+      const result = await res.json();
+      alert("Passkey registered! You can now login with Face ID.");
+    });
+
+    document.getElementById('loginPasskey').addEventListener('click', async () => {
+      const username = usernameInput.value;
+      if (!username) { alert("Enter your username first!"); return; }
+
+      // 1️⃣ Get authentication options
+      const optionsResponse = await fetch("/webauthn/authenticate_options", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username})
+      });
+      const options = await optionsResponse.json();
+
+      // 2️⃣ Decode challenge
+      options.challenge = bufferDecode(options.challenge);
+      options.allowCredentials = options.allowCredentials.map(cred => {
+        return { id: bufferDecode(cred.id), type: cred.type };
+      });
+
+      // 3️⃣ Get assertion
+      const assertion = await navigator.credentials.get({publicKey: options});
+
+      // 4️⃣ Send to server
+      const credentialData = {
+        id: assertion.id,
+        type: assertion.type,
+        rawId: await bufferEncode(assertion.rawId),
+        response: {
+          authenticatorData: await bufferEncode(assertion.response.authenticatorData),
+          clientDataJSON: await bufferEncode(assertion.response.clientDataJSON),
+          signature: await bufferEncode(assertion.response.signature),
+          userHandle: assertion.response.userHandle ? await bufferEncode(assertion.response.userHandle) : null
+        }
+      };
+
+      const res = await fetch("/webauthn/authenticate_response", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username, credential: credentialData})
+      });
+      const result = await res.json();
+      if(result.status === "ok"){
+        window.location.href = "/";
+      } else {
+        alert("Passkey login failed!");
+      }
+    });
+  </script>
 </body>
 </html>
