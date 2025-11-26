@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="{{ url_for('index') }}" class="brand">📦 Inventory Tracker</a>
+    </div>
+    <div class="nav-right">
+      <a href="{{ url_for('index') }}">Dashboard</a>
+      <a href="{{ url_for('purchases') }}">Purchases</a>
+      <a href="{{ url_for('sales') }}">Sales</a>
+      <a href="{{ url_for('inventory') }}">Inventory</a>
+      {% if session.get('user') %}
+        <a href="{{ url_for('logout') }}" style="color: #ffcccc;">Logout</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

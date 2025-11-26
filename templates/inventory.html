@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Inventory</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Product Name</th>
+      <th>Sort / Type</th>
+      <th>In Stock</th>
+      <th>Price per Unit ($)</th>
+      <th>Total Value ($)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for name, sort, stock, price in stock %}
+    <tr>
+      <td>{{ name }}</td>
+      <td>{{ sort }}</td>
+      <td>{{ stock }}</td>
+      <td>{{ "%.2f"|format(price) }}</td>
+      <td>{{ "%.2f"|format(stock * price) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if not stock %}
+<p>No inventory yet. Add some purchases!</p>
+{% endif %}
+{% endblock %}
