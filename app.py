@@ -1,14 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
+import sqlite3, bcrypt
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # change this for production
+app.secret_key = "supersecretkey"  # change this to something random and secret
 DATABASE = "inventory.db"
 
-# --- Database setup ---
+# ------------------ DATABASE SETUP ------------------
 def init_db():
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
+    # Purchases table
     c.execute('''
         CREATE TABLE IF NOT EXISTS purchases (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,6 +19,7 @@ def init_db():
             price REAL
         )
     ''')
+    # Sales table
     c.execute('''
         CREATE TABLE IF NOT EXISTS sales (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,18 +29,35 @@ def init_db():
             FOREIGN KEY(item_id) REFERENCES purchases(id)
         )
     ''')
+    # Users table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password_hash TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+    # Add users if they don’t exist
+    add_default_users()
+
+def add_default_users():
+    users = [("matti", "9002"), ("max", "2010")]
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    for username, plain_pw in users:
+        c.execute("SELECT username FROM users WHERE username=?", (username,))
+        if not c.fetchone():
+            hashed_pw = bcrypt.hashpw(plain_pw.encode(), bcrypt.gensalt())
+            c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed_pw))
     conn.commit()
     conn.close()
 
 init_db()
 
-# --- Users ---
-USERS = {
-    "matti": "9002",
-    "max": "2010"
-}
-
-# --- Login required decorator ---
+# ------------------ LOGIN SYSTEM ------------------
 def login_required(f):
     def wrapper(*args, **kwargs):
         if "user" not in session:
@@ -47,13 +66,19 @@ def login_required(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
-# --- Login page ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
-        password = request.form['password']
-        if username in USERS and USERS[username] == password:
+        password = request.form['password'].encode()
+
+        conn = sqlite3.connect(DATABASE)
+        c = conn.cursor()
+        c.execute("SELECT password_hash FROM users WHERE username=?", (username,))
+        row = c.fetchone()
+        conn.close()
+
+        if row and bcrypt.checkpw(password, row[0]):
             session['user'] = username
             return redirect(url_for('index'))
         else:
@@ -65,7 +90,7 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
-# --- Dashboard ---
+# ------------------ DASHBOARD ------------------
 @app.route('/')
 @login_required
 def index():
@@ -80,7 +105,7 @@ def index():
     conn.close()
     return render_template("index.html", total_spent=total_spent, total_revenue=total_revenue, profit=profit)
 
-# --- Purchases ---
+# ------------------ PURCHASES ------------------
 @app.route('/purchases', methods=['GET', 'POST'])
 @login_required
 def purchases():
@@ -106,7 +131,7 @@ def purchases():
         return redirect(url_for('purchases'))
     return render_template('purchases.html')
 
-# --- Sales ---
+# ------------------ SALES ------------------
 @app.route('/sales', methods=['GET', 'POST'])
 @login_required
 def sales():
@@ -120,6 +145,7 @@ def sales():
         HAVING stock > 0
     ''')
     items = c.fetchall()
+
     if request.method == 'POST':
         item_id = int(request.form['item_id'])
         quantity = int(request.form['quantity'])
@@ -132,7 +158,7 @@ def sales():
     conn.close()
     return render_template('sales.html', items=items)
 
-# --- Inventory ---
+# ------------------ INVENTORY ------------------
 @app.route('/inventory')
 @login_required
 def inventory():
@@ -150,9 +176,7 @@ def inventory():
     conn.close()
     return render_template('inventory.html', stock=stock)
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
+# ------------------ WIPE DATA ------------------
 @app.route('/wipe_data', methods=['POST'])
 @login_required
 def wipe_data():
@@ -167,3 +191,7 @@ def wipe_data():
         return redirect(url_for('inventory'))
     else:
         return redirect(url_for('inventory'))
+
+# ------------------ RUN APP ------------------
+if __name__ == '__main__':
+    app.run(debug=True)

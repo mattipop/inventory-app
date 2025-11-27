@@ -1,43 +1,44 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Inventory</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Product Name</th>
-      <th>Sort / Type</th>
-      <th>In Stock</th>
-      <th>Price per Unit ($)</th>
-      <th>Total Value ($)</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for name, sort, stock, price in stock %}
-    <tr>
-      <td>{{ name }}</td>
-      <td>{{ sort }}</td>
-      <td>{{ stock }}</td>
-      <td>{{ "%.2f"|format(price) }}</td>
-      <td>{{ "%.2f"|format(stock * price) }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-  
-  <form method="POST" action="{{ url_for('wipe_data') }}" onsubmit="return confirmWipe();">
-    <input type="hidden" name="confirm" value="YES">
-    <button type="submit" style="background-color: red; color: white; padding: 10px; border: none; border-radius: 5px;">
-        Wipe All Data
-    </button>
+<h2>📦 Current Inventory</h2>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Sort / Type</th>
+        <th>In Stock</th>
+        <th>Price per Unit ($)</th>
+        <th>Total Value ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, sort, stock_qty, price in stock %}
+      <tr>
+        <td>{{ name }}</td>
+        <td>{{ sort }}</td>
+        <td>{{ stock_qty }}</td>
+        <td>{{ "%.2f"|format(price) }}</td>
+        <td>{{ "%.2f"|format(stock_qty * price) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if not stock %}
+<p style="text-align:center; color:gray;">No inventory yet — add some purchases!</p>
+{% endif %}
+
+<form method="POST" action="{{ url_for('wipe_data') }}" onsubmit="return confirmWipe();">
+  <input type="hidden" name="confirm" value="YES">
+  <button type="submit" class="wipe-btn">🗑️ Wipe All Data</button>
 </form>
 
 <script>
 function confirmWipe() {
-    return confirm("⚠️ Are you sure you want to wipe ALL data? This cannot be undone!");
+  return confirm("⚠️ Are you sure you want to wipe ALL data? This cannot be undone!");
 }
 </script>
-
-</table>
-{% if not stock %}
-<p>No inventory yet. Add some purchases!</p>
-{% endif %}
 {% endblock %}

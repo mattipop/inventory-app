@@ -1,10 +1,23 @@
+/* === General styles === */
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background-color: #f7f9fb;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f5f7fa;
   margin: 0;
   padding: 0;
+  color: #333;
 }
 
+/* Container (main content area) */
+.container {
+  max-width: 800px;
+  margin: 1.5rem auto;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* === Navbar === */
 .navbar {
   background-color: #004aad;
   color: white;
@@ -12,59 +25,173 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0.8rem 1rem;
+  flex-wrap: wrap;
 }
 
-.nav-right a, .brand {
+.nav-brand a {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-links a {
   color: white;
   text-decoration: none;
-  margin: 0 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  transition: background 0.3s;
 }
 
-.nav-right a:hover {
-  text-decoration: underline;
+.nav-links a:hover {
+  background-color: #00347d;
 }
 
-.container {
-  max-width: 700px;
-  margin: 2rem auto;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.logout {
+  color: #ffcccc;
 }
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-input[type="submit"] {
-  background-color: #004aad;
-  color: white;
+/* Menu toggle for mobile */
+.menu-toggle {
+  background: none;
   border: none;
+  color: white;
+  font-size: 1.8rem;
+  display: none;
   cursor: pointer;
 }
 
-input[type="submit"]:hover {
-  background-color: #00337d;
+/* === Forms === */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-/* Table styling */
+label {
+  font-weight: 500;
+}
+
+input, select {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus {
+  border-color: #004aad;
+  outline: none;
+  box-shadow: 0 0 3px rgba(0, 74, 173, 0.4);
+}
+
+input[type="submit"],
+button {
+  background-color: #004aad;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+input[type="submit"]:hover,
+button:hover {
+  background-color: #00347d;
+}
+
+/* === Table === */
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 th, td {
-  border: 1px solid #ddd;
   padding: 10px;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+  font-size: 0.95rem;
+  word-wrap: break-word;
 }
 
 th {
   background-color: #004aad;
   color: white;
+}
+
+tr:nth-child(even) {
+  background-color: #f8faff;
+}
+
+/* Table container for horizontal scroll on small screens */
+.table-container {
+  overflow-x: auto;
+}
+
+/* === Wipe Data Button === */
+.wipe-btn {
+  background-color: #d62828;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-top: 1rem;
+  cursor: pointer;
+}
+
+.wipe-btn:hover {
+  background-color: #a81818;
+}
+
+/* === Responsive layout === */
+@media (max-width: 700px) {
+  .container {
+    margin: 0.8rem;
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  h2, h3 {
+    text-align: center;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+    display: none;
+    background-color: #004aad;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .nav-links a {
+    padding: 14px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  input, select, button {
+    font-size: 1rem;
+  }
 }

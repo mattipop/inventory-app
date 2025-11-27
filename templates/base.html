@@ -8,16 +8,19 @@
 </head>
 <body>
   <nav class="navbar">
-    <div class="nav-left">
-      <a href="{{ url_for('index') }}" class="brand">📦 Inventory Tracker</a>
+    <div class="nav-brand">
+      <a href="{{ url_for('index') }}">📦 Inventory Tracker</a>
     </div>
-    <div class="nav-right">
+
+    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
+    <div class="nav-links" id="navLinks">
       <a href="{{ url_for('index') }}">Dashboard</a>
       <a href="{{ url_for('purchases') }}">Purchases</a>
       <a href="{{ url_for('sales') }}">Sales</a>
       <a href="{{ url_for('inventory') }}">Inventory</a>
       {% if session.get('user') %}
-        <a href="{{ url_for('logout') }}" style="color: #ffcccc;">Logout</a>
+        <a href="{{ url_for('logout') }}" class="logout">Logout ({{ session.get('user') }})</a>
       {% endif %}
     </div>
   </nav>
@@ -25,5 +28,11 @@
   <div class="container">
     {% block content %}{% endblock %}
   </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('active');
+    }
+  </script>
 </body>
 </html>
