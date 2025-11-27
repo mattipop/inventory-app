@@ -44,7 +44,7 @@ def init_db():
     add_default_users()
 
 def add_default_users():
-    users = [("matti", "9002"), ("max", "2010")]
+    users = [("matti", "280611"), ("max", "69420")]
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     for username, plain_pw in users:
